@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Senior {
+  id               String   @id @default(uuid())
+  phone_number     String   @unique
+  full_name        String
+  physical_address String
+  created_at       DateTime @default(now())
+  
+  tasks            Task[]
+}
+
+model Volunteer {
+  id           String   @id @default(uuid())
+  phone_number String   @unique
+  full_name    String
+  is_verified  Boolean  @default(false)
+  created_at   DateTime @default(now())
+  
+  tasks        Task[]
+}
+
+model Task {
+  id           String   @id @default(uuid())
+  senior_id    String
+  category     String
+  audio_url    String?
+  text_msg     String?
+  status       String   @default("PENDING")
+  volunteer_id String?
+  created_at   DateTime @default(now())
+
+  // Relations
+  senior       Senior     @relation(fields: [senior_id], references: [id])
+  volunteer    Volunteer? @relation(fields: [volunteer_id], references: [id])
+}
