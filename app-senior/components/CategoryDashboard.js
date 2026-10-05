@@ -22,14 +22,7 @@ export default function CategoryDashboard() {
 
   const handleCategoryPress = (category) => {
     if (category.id === 'emergency') {
-      Alert.alert(
-        "EMERGENCY",
-        "Calling local dispatcher now...",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Call", onPress: () => Linking.openURL(EMERGENCY_NUMBER) }
-        ]
-      );
+      Linking.openURL(EMERGENCY_NUMBER);
     } else {
       setSelectedCategory(category);
       setTextMessage('');
@@ -46,7 +39,7 @@ export default function CategoryDashboard() {
     }
   }
 
-  const BACKEND_URL = 'https://untidy-oasis-gorgeous.ngrok-free.dev';
+  const BACKEND_URL = 'https://sahara-w2d3.onrender.com';
 
   async function stopRecording() {
     setRecording(undefined);

@@ -13,17 +13,19 @@ model Senior {
   phone_number     String   @unique
   full_name        String
   physical_address String
+  expo_push_token  String?
   created_at       DateTime @default(now())
   
   tasks            Task[]
 }
 
 model Volunteer {
-  id           String   @id @default(uuid())
-  phone_number String   @unique
-  full_name    String
+  id                   String   @id @default(uuid())
+  phone_number         String   @unique
+  full_name            String
   is_verified          Boolean  @default(false)
   is_medical_certified Boolean  @default(false)
+  expo_push_token      String?
   created_at           DateTime @default(now())
   
   tasks        Task[]

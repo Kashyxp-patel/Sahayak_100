@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const { PrismaClient } = require('@prisma/client');
+const { Expo } = require('expo-server-sdk');
+const expo = new Expo();
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
@@ -18,6 +20,21 @@ app.use(express.json());
 // Setup Multer to store incoming audio in memory (RAM) instead of local disk
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
+
+async function sendPushNotification(pushToken, title, body, data = {}) {
+    if (!Expo.isExpoPushToken(pushToken)) return;
+    try {
+        await expo.sendPushNotificationsAsync([{
+            to: pushToken,
+            sound: 'default',
+            title,
+            body,
+            data
+        }]);
+    } catch (error) {
+        console.error("Push Notification Error:", error);
+    }
+}
 
 // ==========================================
 // SUPABASE API ENDPOINTS (Phase 2)
@@ -75,6 +92,19 @@ app.post('/api/tasks/upload', upload.single('audio'), async (req, res) => {
             }
         });
 
+        // 3. Send Push Notifications to Volunteers
+        const volunteers = await prisma.volunteer.findMany({
+            where: { expo_push_token: { not: null } }
+        });
+        
+        for (const vol of volunteers) {
+            await sendPushNotification(
+                vol.expo_push_token,
+                "New Task Available! 🚨",
+                `A new ${category} request was just posted in your area.`
+            );
+        }
+
         res.status(201).json({ success: true, data: newTask, message: 'Saved to Supabase with Cloud Audio!' });
     } catch (error) {
         console.error(error);
@@ -123,11 +153,22 @@ app.patch('/api/tasks/:id/accept', async (req, res) => {
             data: {
                 status: 'ACCEPTED',
                 volunteer_id: volunteerId
-            }
+            },
+            include: { senior: true, volunteer: true }
         });
+
+        // Send Push Notification to the Senior
+        if (updatedTask.senior && updatedTask.senior.expo_push_token) {
+            await sendPushNotification(
+                updatedTask.senior.expo_push_token,
+                "Help is on the way! 🏃",
+                `${updatedTask.volunteer.full_name} has accepted your request.`
+            );
+        }
 
         res.status(200).json({ success: true, data: updatedTask });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ success: false, error: { code: 'DATABASE_ERROR' }});
     }
 });
@@ -206,6 +247,34 @@ app.patch('/api/admin/volunteers/:id/verify', async (req, res) => {
         res.status(200).json({ success: true, data: verified });
     } catch (error) {
         console.error(error);
+        res.status(500).json({ success: false, error: { code: 'DATABASE_ERROR' }});
+    }
+});
+
+// API-09: Save Senior Push Token
+app.post('/api/users/senior/:id/push-token', async (req, res) => {
+    try {
+        const { token } = req.body;
+        await prisma.senior.update({
+            where: { id: req.params.id },
+            data: { expo_push_token: token }
+        });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, error: { code: 'DATABASE_ERROR' }});
+    }
+});
+
+// API-10: Save Volunteer Push Token
+app.post('/api/users/volunteer/:id/push-token', async (req, res) => {
+    try {
+        const { token } = req.body;
+        await prisma.volunteer.update({
+            where: { id: req.params.id },
+            data: { expo_push_token: token }
+        });
+        res.json({ success: true });
+    } catch (error) {
         res.status(500).json({ success: false, error: { code: 'DATABASE_ERROR' }});
     }
 });
