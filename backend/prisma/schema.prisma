@@ -22,8 +22,9 @@ model Volunteer {
   id           String   @id @default(uuid())
   phone_number String   @unique
   full_name    String
-  is_verified  Boolean  @default(false)
-  created_at   DateTime @default(now())
+  is_verified          Boolean  @default(false)
+  is_medical_certified Boolean  @default(false)
+  created_at           DateTime @default(now())
   
   tasks        Task[]
 }

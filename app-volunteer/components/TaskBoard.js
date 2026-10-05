@@ -1,18 +1,42 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+
+const BACKEND_URL = 'https://untidy-oasis-gorgeous.ngrok-free.dev';
+const VOLUNTEER_ID = 'test-volunteer-456';
 
 export default function TaskBoard() {
-  const [tasks, setTasks] = useState([
-    { id: '1', time: '2 mins ago', status: 'PENDING', category: 'Medical', text: '', hasAudio: true },
-    { id: '2', time: '15 mins ago', status: 'PENDING', category: 'Essential', text: 'Need 1kg sugar and tea powder from market', hasAudio: false },
-    { id: '3', time: '1 hour ago', status: 'ACCEPTED', category: 'Travel', text: '', hasAudio: true },
-  ]);
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handlePlayAudio = (taskId) => {
-    Alert.alert("Playing Audio...", `Streaming Tulu voice note for task ${taskId}`);
+  const fetchActiveTasks = async () => {
+    try {
+      // Pass tags=medical,essential to only see those, or leave empty to see all (except medical if filtered)
+      // Since our dummy is medical certified, let's pass tags=medical,essential,travel,general
+      const res = await fetch(`${BACKEND_URL}/api/tasks?tags=medical,essential,travel,general,other`, {
+        headers: { 'ngrok-skip-browser-warning': 'true' }
+      });
+      const json = await res.json();
+      if (json.success) setTasks(json.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAcceptTask = (taskId) => {
+  useEffect(() => {
+    fetchActiveTasks();
+    // Refresh every 10 seconds
+    const interval = setInterval(fetchActiveTasks, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handlePlayAudio = (taskId, audioUrl) => {
+    if (!audioUrl) return;
+    Alert.alert("Playing Audio...", `Streaming voice note from: ${audioUrl}`);
+  };
+
+  const handleAcceptTask = async (taskId) => {
     Alert.alert(
       "Accept Task?",
       "Are you sure you can complete this request?",
@@ -20,7 +44,25 @@ export default function TaskBoard() {
         { text: "Cancel", style: "cancel" },
         { 
           text: "Accept", 
-          onPress: () => setTasks(tasks.map(t => t.id === taskId ? { ...t, status: 'ACCEPTED' } : t))
+          onPress: async () => {
+            try {
+              const res = await fetch(`${BACKEND_URL}/api/tasks/${taskId}/accept`, {
+                method: 'PATCH',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'ngrok-skip-browser-warning': 'true' 
+                },
+                body: JSON.stringify({ volunteerId: VOLUNTEER_ID })
+              });
+              if (res.ok) {
+                Alert.alert("Task Accepted!", "This task has been moved to your 'My Tasks' dashboard.");
+                fetchActiveTasks(); // Refresh board
+              }
+            } catch (err) {
+              console.error(err);
+              Alert.alert("Error", "Could not accept task.");
+            }
+          }
         }
       ]
     );
@@ -30,19 +72,19 @@ export default function TaskBoard() {
     <View style={[styles.taskCard, item.status === 'ACCEPTED' && styles.taskAccepted]}>
       <View style={styles.taskHeader}>
         <Text style={styles.categoryBadge}>{item.category}</Text>
-        <Text style={styles.timeText}>{item.time}</Text>
+        <Text style={styles.timeText}>{new Date(item.created_at).toLocaleTimeString()}</Text>
       </View>
       
-      {item.text ? (
+      {item.text_msg ? (
         <View style={styles.textMessageContainer}>
-          <Text style={styles.textMessage}>"{item.text}"</Text>
+          <Text style={styles.textMessage}>"{item.text_msg}"</Text>
         </View>
       ) : null}
       
       <View style={styles.actionRow}>
-        {item.hasAudio && (
-          <TouchableOpacity style={styles.playButton} onPress={() => handlePlayAudio(item.id)}>
-            <Text style={styles.buttonText}>▶ Play Voice Note</Text>
+        {item.audio_url && (
+          <TouchableOpacity style={styles.playButton} onPress={() => handlePlayAudio(item.id, item.audio_url)}>
+            <Text style={styles.buttonText}>▶ Voice Note</Text>
           </TouchableOpacity>
         )}
         
@@ -57,13 +99,18 @@ export default function TaskBoard() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.headerTitle}>Active Help Requests (Shirva)</Text>
-      <FlatList
-        data={tasks}
-        keyExtractor={item => item.id}
-        renderItem={renderTask}
-        contentContainerStyle={styles.listContainer}
-      />
+      <Text style={styles.headerTitle}>Live Help Requests</Text>
+      {loading ? (
+        <ActivityIndicator size="large" style={{ marginTop: 50 }} />
+      ) : (
+        <FlatList
+          data={tasks}
+          keyExtractor={item => item.id}
+          renderItem={renderTask}
+          contentContainerStyle={styles.listContainer}
+          ListEmptyComponent={<Text style={{textAlign: 'center', marginTop: 20}}>No active requests right now.</Text>}
+        />
+      )}
     </View>
   );
 }

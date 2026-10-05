@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "972309353553",
+    "project_id": "sahayak-9a0ef",
+    "storage_bucket": "sahayak-9a0ef.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:972309353553:android:e55a1b1d85a2929be61470",
+        "android_client_info": {
+          "package_name": "com.Sahara.senior"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQKB6o0YRVf2iQJos6mh4ib49U7B-w_II"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

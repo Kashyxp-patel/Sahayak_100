@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Alert, Linking, ScrollView } from 'react-native';
-import { Audio } from 'expo-av';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Alert, Linking, ScrollView, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+// import { Audio } from 'expo-av'; // Bypassed for Expo Go
 
 const CATEGORIES = [
-  { id: 'medical', label: 'Medical', color: '#E53935', icon: '💊' },
-  { id: 'essential', label: 'Essential', color: '#43A047', icon: '🛒' },
-  { id: 'travel', label: 'Travel', color: '#1E88E5', icon: '🚗' },
-  { id: 'volunteer', label: 'Volunteer', color: '#8E24AA', icon: '🤝' },
-  { id: 'other', label: 'Other Issue', color: '#FB8C00', icon: '❓' },
-  { id: 'emergency', label: 'EMERGENCY', color: '#b71c1c', icon: '🚨' },
+  { id: 'medical', label: 'Medical Help', color: '#EF4444', icon: 'medkit' },
+  { id: 'essential', label: 'Groceries', color: '#10B981', icon: 'cart' },
+  { id: 'travel', label: 'Transport', color: '#3B82F6', icon: 'car' },
+  { id: 'volunteer', label: 'Company', color: '#8B5CF6', icon: 'people' },
+  { id: 'other', label: 'Other', color: '#F59E0B', icon: 'apps' },
+  { id: 'emergency', label: 'SOS 112', color: '#DC2626', icon: 'warning' },
 ];
 
 export default function CategoryDashboard() {
@@ -37,37 +38,77 @@ export default function CategoryDashboard() {
 
   async function startRecording() {
     try {
-      await Audio.requestPermissionsAsync();
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-      setRecording(recording);
+      console.log('[Mock] Starting recording..');
+      setRecording(true); // dummy recording state
       setIsRecording(true);
     } catch (err) {
       console.error('Failed to start recording', err);
     }
   }
 
+  const BACKEND_URL = 'https://untidy-oasis-gorgeous.ngrok-free.dev';
+
   async function stopRecording() {
     setRecording(undefined);
     setIsRecording(false);
     if (!recording) return;
-    await recording.stopAndUnloadAsync();
-    const uri = recording.getURI();
-    console.log('Recording stopped:', uri);
-    Alert.alert("Voice Note Sent!", `Your ${selectedCategory.label} request has been sent to local volunteers.`);
+    
+    const uri = "file:///dummy-audio-file-for-expo-go.m4a";
+    console.log('[Mock] Recording stopped:', uri);
+    
+    try {
+      const formData = new FormData();
+      formData.append('category', selectedCategory.id);
+      formData.append('seniorId', 'test-senior-123');
+      formData.append('textMessage', '[Mock Audio Request]'); // Sending text since it's a mock
+
+      const response = await fetch(`${BACKEND_URL}/api/tasks/upload`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
+      });
+      
+      if (!response.ok) throw new Error('Network response was not ok');
+      Alert.alert("Voice Note Sent!", `Your ${selectedCategory.label} request has been sent to local volunteers.`);
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Could not connect to the backend server.");
+    }
     setSelectedCategory(null);
   }
 
-  const handleSubmitText = () => {
+  const handleSubmitText = async () => {
     if (!textMessage.trim()) return;
-    // Logic to send textMessage along with selectedCategory.id goes here
-    Alert.alert("Text Sent!", `Your ${selectedCategory.label} text request has been sent to local volunteers.`);
+    
+    try {
+      const formData = new FormData();
+      formData.append('category', selectedCategory.id);
+      formData.append('seniorId', 'test-senior-123');
+      formData.append('textMessage', textMessage);
+
+      const response = await fetch(`${BACKEND_URL}/api/tasks/upload`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
+      });
+      
+      if (!response.ok) throw new Error('Network response was not ok');
+      Alert.alert("Text Sent!", `Your ${selectedCategory.label} text request has been sent to local volunteers.`);
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Could not connect to the backend server.");
+    }
     setSelectedCategory(null);
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>What do you need help with?</Text>
+      <Text style={styles.subtitle}>Tap a category to request assistance.</Text>
       
       <ScrollView contentContainerStyle={styles.grid}>
         {CATEGORIES.map((cat) => (
@@ -75,35 +116,45 @@ export default function CategoryDashboard() {
             key={cat.id} 
             style={[styles.gridItem, { backgroundColor: cat.color }]}
             onPress={() => handleCategoryPress(cat)}
+            activeOpacity={0.8}
           >
-            <Text style={styles.iconText}>{cat.icon}</Text>
+            <Ionicons name={cat.icon} size={42} color="white" style={styles.iconMargin} />
             <Text style={styles.gridText}>{cat.label}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
 
       {/* Pop-up Card for Audio/Text Input */}
-      <Modal visible={!!selectedCategory} animationType="slide" transparent={true}>
+      <Modal visible={!!selectedCategory} animationType="fade" transparent={true}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>{selectedCategory?.label} Request</Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{selectedCategory?.label} Request</Text>
+              <Ionicons name={selectedCategory?.icon} size={28} color={selectedCategory?.color} />
+            </View>
             
             <TouchableOpacity 
               style={[styles.micButton, isRecording && styles.recordingActive]}
               onPressIn={startRecording}
               onPressOut={stopRecording}
+              activeOpacity={0.9}
             >
-              <Text style={styles.micIcon}>🎙️</Text>
+              <Ionicons name="mic" size={54} color="white" />
               <Text style={styles.micHint}>
                 {isRecording ? "Listening... Release to send" : "Hold to Record Voice"}
               </Text>
             </TouchableOpacity>
 
-            <Text style={styles.orText}>- OR -</Text>
+            <View style={styles.dividerRow}>
+              <View style={styles.divider} />
+              <Text style={styles.orText}>OR</Text>
+              <View style={styles.divider} />
+            </View>
 
             <TextInput
               style={styles.textInput}
-              placeholder="Type your message here..."
+              placeholder="Type your specific message here..."
+              placeholderTextColor="#94A3B8"
               value={textMessage}
               onChangeText={setTextMessage}
               multiline
@@ -111,10 +162,11 @@ export default function CategoryDashboard() {
             
             <View style={styles.actionRow}>
               <TouchableOpacity style={styles.cancelButton} onPress={() => setSelectedCategory(null)}>
-                <Text style={styles.btnText}>Cancel</Text>
+                <Text style={styles.btnTextDark}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.sendButton} onPress={handleSubmitText}>
-                <Text style={styles.btnText}>Send Text</Text>
+                <Text style={styles.btnTextLight}>Send Request</Text>
+                <Ionicons name="send" size={16} color="white" />
               </TouchableOpacity>
             </View>
           </View>
@@ -125,37 +177,61 @@ export default function CategoryDashboard() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 15, backgroundColor: '#F5F5F5' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  container: { flex: 1, padding: 20, backgroundColor: '#F8FAFC' },
+  title: { fontSize: 22, fontWeight: '800', color: '#1E293B', marginTop: 10 },
+  subtitle: { fontSize: 15, color: '#64748B', marginBottom: 25, marginTop: 4 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingBottom: 40 },
   gridItem: { 
-    width: '48%', 
+    width: '47%', 
     aspectRatio: 1, 
-    borderRadius: 15, 
+    borderRadius: 24, 
     justifyContent: 'center', 
     alignItems: 'center', 
-    marginBottom: 15,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 5 
+    marginBottom: 20,
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 6 }, 
+    shadowOpacity: 0.15, 
+    shadowRadius: 10, 
+    elevation: 8 
   },
-  iconText: { fontSize: 40, marginBottom: 10 },
-  gridText: { color: 'white', fontSize: 18, fontWeight: 'bold', textAlign: 'center' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: 'white', borderRadius: 20, padding: 20, alignItems: 'center' },
-  modalTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 20 },
+  iconMargin: { marginBottom: 12 },
+  gridText: { color: 'white', fontSize: 17, fontWeight: '700', textAlign: 'center', letterSpacing: 0.5 },
+  
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.65)', justifyContent: 'center', padding: 20 },
+  modalCard: { 
+    backgroundColor: 'white', 
+    borderRadius: 28, 
+    padding: 24, 
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10
+  },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 30 },
+  modalTitle: { fontSize: 24, fontWeight: '800', color: '#1E293B' },
+  
   micButton: { 
-    width: 150, height: 150, borderRadius: 75, backgroundColor: '#4CAF50', 
-    justifyContent: 'center', alignItems: 'center', marginBottom: 10 
+    width: 160, height: 160, borderRadius: 80, backgroundColor: '#10B981', 
+    justifyContent: 'center', alignItems: 'center', marginBottom: 20,
+    shadowColor: '#10B981', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8
   },
-  recordingActive: { backgroundColor: '#F44336', transform: [{ scale: 1.1 }] },
-  micIcon: { fontSize: 50 },
-  micHint: { color: 'white', fontWeight: 'bold', marginTop: 10, textAlign: 'center', paddingHorizontal: 10 },
-  orText: { marginVertical: 15, fontSize: 16, color: '#666', fontWeight: 'bold' },
+  recordingActive: { backgroundColor: '#EF4444', transform: [{ scale: 1.05 }], shadowColor: '#EF4444' },
+  micHint: { color: 'white', fontWeight: '700', marginTop: 12, textAlign: 'center', paddingHorizontal: 15, fontSize: 13 },
+  
+  dividerRow: { flexDirection: 'row', alignItems: 'center', width: '100%', marginVertical: 20 },
+  divider: { flex: 1, height: 1, backgroundColor: '#E2E8F0' },
+  orText: { marginHorizontal: 15, fontSize: 14, color: '#94A3B8', fontWeight: 'bold' },
+  
   textInput: { 
-    width: '100%', height: 100, borderWidth: 1, borderColor: '#ccc', borderRadius: 10, 
-    padding: 15, fontSize: 16, textAlignVertical: 'top', marginBottom: 20 
+    width: '100%', height: 110, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', 
+    borderRadius: 16, padding: 16, fontSize: 16, textAlignVertical: 'top', marginBottom: 24, color: '#0F172A'
   },
-  actionRow: { flexDirection: 'row', width: '100%', justifyContent: 'space-between' },
-  cancelButton: { flex: 1, backgroundColor: '#9E9E9E', padding: 15, borderRadius: 10, marginRight: 10, alignItems: 'center' },
-  sendButton: { flex: 1, backgroundColor: '#2196F3', padding: 15, borderRadius: 10, marginLeft: 10, alignItems: 'center' },
-  btnText: { color: 'white', fontSize: 16, fontWeight: 'bold' }
+  
+  actionRow: { flexDirection: 'row', width: '100%', gap: 12 },
+  cancelButton: { flex: 1, backgroundColor: '#F1F5F9', padding: 16, borderRadius: 16, alignItems: 'center' },
+  sendButton: { flex: 1.5, backgroundColor: '#0EA5E9', padding: 16, borderRadius: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 },
+  btnTextDark: { color: '#475569', fontSize: 16, fontWeight: 'bold' },
+  btnTextLight: { color: 'white', fontSize: 16, fontWeight: 'bold' }
 });

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Linking, Alert } from 'react-native';
-import { Audio } from 'expo-av';
+// import { Audio } from 'expo-av'; // Bypassed for Expo Go
 
 export default function TwoButtonInterface() {
   const [recording, setRecording] = useState();
@@ -11,38 +11,48 @@ export default function TwoButtonInterface() {
 
   async function startRecording() {
     try {
-      console.log('Requesting permissions..');
-      await Audio.requestPermissionsAsync();
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      console.log('Starting recording..');
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-      setRecording(recording);
+      console.log('[Mock] Starting recording..');
+      // Bypassing expo-av encoder for Expo Go compatibility
+      setRecording(true); // dummy recording state
       setIsRecording(true);
-      console.log('Recording started');
+      console.log('[Mock] Recording started');
     } catch (err) {
       console.error('Failed to start recording', err);
     }
   }
 
+  const BACKEND_URL = 'https://untidy-oasis-gorgeous.ngrok-free.dev';
+
   async function stopRecording() {
-    console.log('Stopping recording..');
+    console.log('[Mock] Stopping recording..');
     setRecording(undefined);
     setIsRecording(false);
     
     if (!recording) return;
 
-    await recording.stopAndUnloadAsync();
-    const uri = recording.getURI();
-    console.log('Recording stopped and stored at', uri);
+    const uri = "file:///dummy-audio-file-for-expo-go.m4a";
+    console.log('[Mock] Recording stopped and stored at', uri);
     
-    // Here we would upload the URI to our Node.js backend
-    Alert.alert("Voice Note Sent!", "The local Shirva volunteers have received your request.");
+    try {
+      const formData = new FormData();
+      formData.append('category', 'general'); // General category for big green button
+      formData.append('seniorId', 'test-senior-123');
+      formData.append('textMessage', '[Mock Audio Request - Main Button]'); 
+
+      const response = await fetch(`${BACKEND_URL}/api/tasks/upload`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
+      });
+      
+      if (!response.ok) throw new Error('Network response was not ok');
+      Alert.alert("Voice Note Sent!", "The local Shirva volunteers have received your request.");
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Could not connect to the backend server.");
+    }
   }
 
   function handleEmergency() {

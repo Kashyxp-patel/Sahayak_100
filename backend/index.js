@@ -85,8 +85,18 @@ app.post('/api/tasks/upload', upload.single('audio'), async (req, res) => {
 // API-02: Volunteers Fetch Pending Tasks
 app.get('/api/tasks', async (req, res) => {
     try {
+        const tagsParam = req.query.tags;
+        let whereClause = { status: 'PENDING' };
+
+        // If the volunteer app passes specific tags (e.g. ?tags=medical,travel,essential)
+        // Only return tasks that match those categories.
+        if (tagsParam) {
+            const allowedCategories = tagsParam.split(',');
+            whereClause.category = { in: allowedCategories };
+        }
+
         const pendingTasks = await prisma.task.findMany({
-            where: { status: 'PENDING' },
+            where: whereClause,
             orderBy: { created_at: 'desc' }
         });
         res.status(200).json({ success: true, count: pendingTasks.length, data: pendingTasks });
@@ -118,6 +128,84 @@ app.patch('/api/tasks/:id/accept', async (req, res) => {
 
         res.status(200).json({ success: true, data: updatedTask });
     } catch (error) {
+        res.status(500).json({ success: false, error: { code: 'DATABASE_ERROR' }});
+    }
+});
+
+// API-04: Senior Fetch Task History
+app.get('/api/tasks/senior/:seniorId', async (req, res) => {
+    try {
+        const history = await prisma.task.findMany({
+            where: { senior_id: req.params.seniorId },
+            include: { volunteer: true },
+            orderBy: { created_at: 'desc' }
+        });
+        res.status(200).json({ success: true, data: history });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, error: { code: 'DATABASE_ERROR' }});
+    }
+});
+
+// API-05: Volunteer Fetch Task History (Active & Completed)
+app.get('/api/tasks/volunteer/:volunteerId', async (req, res) => {
+    try {
+        const history = await prisma.task.findMany({
+            where: { volunteer_id: req.params.volunteerId },
+            include: { senior: true },
+            orderBy: { created_at: 'desc' }
+        });
+        res.status(200).json({ success: true, data: history });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, error: { code: 'DATABASE_ERROR' }});
+    }
+});
+
+// API-06: Complete a Task
+app.patch('/api/tasks/:id/complete', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const updatedTask = await prisma.task.update({
+            where: { id },
+            data: { status: 'COMPLETED' }
+        });
+        res.status(200).json({ success: true, data: updatedTask });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, error: { code: 'DATABASE_ERROR' }});
+    }
+});
+
+// ==========================================
+// ADMIN / POLICE API ENDPOINTS
+// ==========================================
+
+// API-07: Get Unverified Volunteers
+app.get('/api/admin/volunteers/pending', async (req, res) => {
+    try {
+        const pending = await prisma.volunteer.findMany({
+            where: { is_verified: false },
+            orderBy: { created_at: 'desc' }
+        });
+        res.status(200).json({ success: true, data: pending });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, error: { code: 'DATABASE_ERROR' }});
+    }
+});
+
+// API-08: Verify Volunteer
+app.patch('/api/admin/volunteers/:id/verify', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const verified = await prisma.volunteer.update({
+            where: { id },
+            data: { is_verified: true }
+        });
+        res.status(200).json({ success: true, data: verified });
+    } catch (error) {
+        console.error(error);
         res.status(500).json({ success: false, error: { code: 'DATABASE_ERROR' }});
     }
 });
