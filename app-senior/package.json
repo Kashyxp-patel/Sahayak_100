@@ -4,7 +4,7 @@
   "main": "index.js",
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
-    "expo": "~57.0.22",
+    "expo": "~57.0.26",
     "expo-av": "^16.0.8",
     "expo-constants": "^57.0.20",
     "expo-dev-client": "~57.0.19",
@@ -15,7 +15,7 @@
     "firebase": "^12.19.0",
     "react": "19.2.3",
     "react-native": "0.86.3",
-    "react-native-webview": "^14.0.1"
+    "react-native-webview": "13.16.1"
   },
   "scripts": {
     "start": "expo start",
