@@ -1,34 +1,35 @@
 {
-    "expo":  {
-                 "name":  "app-senior",
-                 "slug":  "app-senior",
-                 "version":  "1.0.0",
-                 "orientation":  "portrait",
-                 "icon":  "./assets/icon.png",
-                 "userInterfaceStyle":  "light",
-                 "ios":  {
-                             "supportsTablet":  true
-                         },
-                 "android":  {
-                                 "adaptiveIcon":  {
-                                                      "backgroundColor":  "#E6F4FE",
-                                                      "foregroundImage":  "./assets/android-icon-foreground.png",
-                                                      "backgroundImage":  "./assets/android-icon-background.png",
-                                                      "monochromeImage":  "./assets/android-icon-monochrome.png"
-                                                  },
-                                 "package":  "com.Sahara.senior",
-                                 "googleServicesFile":  "./google-services.json"
-                             },
-                 "web":  {
-                             "favicon":  "./assets/favicon.png"
-                         },
-                 "extra":  {
-                               "eas":  {
-                                           "projectId":  "ed265ad2-cfdc-457a-b020-60dca9a81da8"
-                                       }
-                           },
-                 "plugins":  [
-                                 "expo-notifications"
-                             ]
-             }
+  "expo": {
+    "name": "app-senior",
+    "slug": "app-senior",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.Sahara.senior",
+      "googleServicesFile": "./google-services.json"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "ed265ad2-cfdc-457a-b020-60dca9a81da8"
+      }
+    },
+    "plugins": [
+      "expo-notifications",
+      "expo-font"
+    ]
+  }
 }

@@ -1,19 +1,20 @@
 {
-    "expo":  {
-                 "name":  "app-volunteer",
-                 "slug":  "app-volunteer",
-                 "version":  "1.0.0",
-                 "orientation":  "portrait",
-                 "userInterfaceStyle":  "light",
-                 "ios":  {
-                             "supportsTablet":  true
-                         },
-                 "android":  {
-                                 "package":  "com.Sahara.volunteer",
-                                 "googleServicesFile":  "./google-services.json"
-                             },
-                 "plugins":  [
-                                 "expo-notifications"
-                             ]
-             }
+  "expo": {
+    "name": "app-volunteer",
+    "slug": "app-volunteer",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.Sahara.volunteer",
+      "googleServicesFile": "./google-services.json"
+    },
+    "plugins": [
+      "expo-notifications",
+      "expo-font"
+    ]
+  }
 }
