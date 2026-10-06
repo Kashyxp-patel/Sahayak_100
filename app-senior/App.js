@@ -1,11 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, StatusBar, StyleSheet, Text, View, TouchableOpacity, Modal, FlatList, Platform } from 'react-native';
+import { SafeAreaView, StatusBar, StyleSheet, Text, View, TouchableOpacity, Modal, FlatList, Platform, ScrollView } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import CategoryDashboard from './components/CategoryDashboard';
 import LoginScreen from './components/LoginScreen';
 import CompleteProfile from './components/CompleteProfile';
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    this.setState({ errorInfo });
+    console.error("FATAL ERROR CAUGHT:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#b71c1c', padding: 20 }}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: 'white', marginBottom: 10 }}>App Crashed!</Text>
+          <ScrollView>
+            <Text style={{ color: 'white', fontFamily: 'monospace', fontSize: 12 }}>
+              {this.state.error && this.state.error.toString()}
+            </Text>
+            <Text style={{ color: 'white', fontFamily: 'monospace', fontSize: 10, marginTop: 20 }}>
+              {this.state.errorInfo && this.state.errorInfo.componentStack}
+            </Text>
+          </ScrollView>
+        </SafeAreaView>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const BACKEND_URL = 'https://sahara-w2d3.onrender.com';
 const PRIMARY_COLOR = '#00796B'; // Calming Teal
@@ -18,7 +53,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export default function App() {
+function MainApp() {
   const [user, setUser] = useState(null);
   const [hasProfile, setHasProfile] = useState(false);
   
@@ -263,3 +298,5 @@ const styles = StyleSheet.create({
   volInfo: { marginTop: 14, padding: 12, backgroundColor: '#F0FDF4', borderRadius: 12, borderWidth: 1, borderColor: '#DCFCE7' },
   volText: { color: '#166534', fontWeight: '600', fontSize: 14 }
 });
+
+export default function App() { return <ErrorBoundary><MainApp /></ErrorBoundary>; }
