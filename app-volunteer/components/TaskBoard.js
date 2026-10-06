@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 
-const BACKEND_URL = 'https://untidy-oasis-gorgeous.ngrok-free.dev';
+const BACKEND_URL = 'https://sahara-w2d3.onrender.com';
 const VOLUNTEER_ID = 'test-volunteer-456';
 
 export default function TaskBoard() {

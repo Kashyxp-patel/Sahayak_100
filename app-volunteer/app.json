@@ -9,7 +9,7 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.Sahara.volunteer",
+      "package": "com.sahara.volunteer",
       "googleServicesFile": "./google-services.json"
     },
     "plugins": [
