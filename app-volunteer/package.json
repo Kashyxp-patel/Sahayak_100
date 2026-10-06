@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "node_modules/expo/AppEntry.js",
   "dependencies": {
+    "@expo/vector-icons": "^15.1.1",
     "expo": "~57.0.22",
     "expo-av": "^16.0.8",
     "expo-constants": "^57.0.20",
